@@ -19,7 +19,7 @@ import uuid
 from datetime import datetime, timezone
 from urllib.parse import parse_qs, urlparse
 
-VERSION = "0.2.1"
+VERSION = "0.3.0"
 TERMS = "KoinVizyon, Hamsi Gücü, Bitcoin, DXY, USDT, XRP, Brent, TOBO, Matrix, MA20, likidasyon."
 NUMBER_WORDS = re.compile(r"\d|\b(?:sıfır|bir|iki|üç|dört|beş|altı|yedi|sekiz|dokuz|on|yirmi|otuz|kırk|elli|altmış|yetmiş|seksen|doksan|yüz|bin|milyon|milyar|dolar|yüzde)\b", re.I)
 

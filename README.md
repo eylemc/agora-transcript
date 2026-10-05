@@ -1,4 +1,4 @@
-# Agora Transcript 0.2.1
+# Agora Transcript 0.3.0
 
 YouTube bağlantısı veya yerel kayıt dosyasından zaman damgalı Türkçe konuşma dökümü.
 Özet/LLM düzeltmesi yapılmaz; sayılar ve koşul ifadeleri kaynakta çözümlendiği gibi saklanır.
@@ -43,6 +43,44 @@ Public repodan tek script ile kurulum:
 ```bash
 curl -fL https://raw.githubusercontent.com/eylemc/agora-transcript/main/scripts/install-agora-transcript.sh -o /tmp/install-agora-transcript.sh && bash /tmp/install-agora-transcript.sh
 ```
+
+## Web arayüzü
+
+Mevcut CLI kurulumundan sonra Agora'da:
+
+```bash
+cd "$HOME/agora-transcript-public"
+git pull --ff-only
+bash scripts/install-transcript-web.sh
+```
+
+Mac'te ayrı bir terminalde (AGORA_ADRESI yerine SSH için kullandığınız adres):
+
+```bash
+ssh -N -L 8765:127.0.0.1:8765 eylem@AGORA_ADRESI
+```
+
+Tünel açıkken tarayıcıda **http://127.0.0.1:8765** açın.
+YouTube bağlantısı, ses/altyazı yöntemi, GPU/CPU ve dil seçilebilir.
+İşlem günlüğü otomatik güncellenir; aynı web sunucusu bir defada tek iş çalıştırır.
+Mevcut `~/agora-transcripts/` kayıtları da listelenir. Dökümde arama ve
+TXT/SRT/JSON/inceleme raporu indirme desteklenir. Yerel dosyalar CLI ile işlenir.
+
+Arayüz yalnız 127.0.0.1 üzerinde dinler; herkese açık barındırma veya çok kullanıcılı
+kullanım için tasarlanmamıştır. Tarayıcıyı kapatmak işi durdurmaz; web servisini
+durdurmak aktif çözümlemeyi keser. CLI ile ayrıca iş başlatırsanız GPU paylaşılır.
+Sunucu kapanırken yarım kalan kayıt `processing` görünebilir; otomatik devam yoktur.
+
+```bash
+systemctl --user status agora-transcript-web.service
+journalctl --user -u agora-transcript-web.service -n 50 --no-pager
+# Yalnız aktif döküm yokken:
+systemctl --user restart agora-transcript-web.service
+```
+
+Kullanıcı servisi oturum kapanınca durabilir. Oturumdan bağımsız çalışması istenirse
+Agora'da `loginctl enable-linger "$USER"` uygulanabilir. Servissiz kullanım:
+`bash src/agora-transcript/web.sh` (terminal açık kalmalıdır).
 
 ## Çalıştırma
 
