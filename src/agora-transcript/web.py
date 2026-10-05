@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Single-user loopback UI. Reach remotely through an SSH tunnel."""
+"""Single-user UI. Loopback by default; explicit trusted LAN binding supported."""
 import argparse
 import json
 import os
@@ -102,9 +102,10 @@ class Handler(BaseHTTPRequestHandler):
 
     def allowed(self):
         port = self.server.server_port
-        hosts = {f'127.0.0.1:{port}', f'localhost:{port}'}
+        hosts = {f'127.0.0.1:{port}', f'localhost:{port}',
+                 f'{self.server.server_address[0]}:{port}'}
         if self.headers.get('Host') not in hosts:
-            self.reply(403, {'error': 'Yalnız localhost erişimi desteklenir.'})
+            self.reply(403, {'error': 'İstek adresi sunucunun dinlediği adresle eşleşmiyor.'})
             return False
         origin = self.headers.get('Origin')
         if origin and origin not in {'http://' + host for host in hosts}:
@@ -156,11 +157,20 @@ class Handler(BaseHTTPRequestHandler):
 def main():
     parser = argparse.ArgumentParser(description='Agora Transcript yerel web arayüzü')
     parser.add_argument('--port', type=int, default=8766)
+    parser.add_argument('--host', default=os.environ.get('AGORA_TRANSCRIPT_HOST', '127.0.0.1'),
+                        help='Dinlenecek IPv4 adresi; LAN için Agora yerel IP adresi')
     parser.add_argument('--output', default=str(Path.home() / 'agora-transcripts'))
     args = parser.parse_args()
-    server = ThreadingHTTPServer(('127.0.0.1', args.port), Handler)
+    import ipaddress
+    try:
+        address = ipaddress.IPv4Address(args.host)
+        if address.is_unspecified or address.is_multicast:
+            raise ValueError('Belirli bir yerel IPv4 adresi kullanın.')
+    except ValueError as error:
+        parser.error(str(error))
+    server = ThreadingHTTPServer((str(address), args.port), Handler)
     server.jobs = Jobs(Path(args.output).expanduser())
-    print(f'Agora Transcript: http://127.0.0.1:{server.server_port}', flush=True)
+    print(f'Agora Transcript: http://{args.host}:{server.server_port}', flush=True)
     try:
         server.serve_forever()
     except KeyboardInterrupt:
