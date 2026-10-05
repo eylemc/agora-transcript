@@ -1,0 +1,14 @@
+.venv/
+.tools/
+__pycache__/
+*.py[cod]
+installed-versions.txt
+transcripts/
+cookies*
+.env*
+*.wav
+*.mp3
+*.m4a
+*.mp4
+*.mkv
+*.webm

@@ -1,0 +1,9 @@
+Agora Transcript 0.2.1 validation
+
+PASS: 8 offline transcript unit tests.
+PASS: 5 installer integration tests (local Git clones, fast-forward update, dirty checkout preservation, foreign repo refusal, divergent history preservation, venv reuse).
+PASS: Python compilation and bash syntax validation.
+
+Not executed in the build workspace: real package/model downloads, actual YouTube retrieval, NVIDIA inference, target Agora installation, and Turkish speech accuracy.
+The installer runs the actual model inference check on Agora unless --skip-model-check is provided.
+Git tests use real local repositories with a test-only transport wrapper. Package installation in the venv reuse test is simulated.
