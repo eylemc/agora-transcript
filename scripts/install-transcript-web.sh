@@ -31,5 +31,5 @@ EOF
 systemctl --user daemon-reload
 systemctl --user enable --now agora-transcript-web.service
 systemctl --user --no-pager status agora-transcript-web.service
-echo 'Arayüz: http://127.0.0.1:8765 — Mac üzerinden aynı portla SSH tüneli açın.'
+echo 'Arayüz: http://127.0.0.1:8766 — Mac üzerinden aynı portla SSH tüneli açın.'
 echo 'Kullanıcı oturumu kapanınca servis durabilir. Kalıcılık gerekiyorsa: loginctl enable-linger "$USER"'

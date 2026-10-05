@@ -155,7 +155,7 @@ class Handler(BaseHTTPRequestHandler):
 
 def main():
     parser = argparse.ArgumentParser(description='Agora Transcript yerel web arayüzü')
-    parser.add_argument('--port', type=int, default=8765)
+    parser.add_argument('--port', type=int, default=8766)
     parser.add_argument('--output', default=str(Path.home() / 'agora-transcripts'))
     args = parser.parse_args()
     server = ThreadingHTTPServer(('127.0.0.1', args.port), Handler)

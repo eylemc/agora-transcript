@@ -57,10 +57,10 @@ bash scripts/install-transcript-web.sh
 Mac'te ayrı bir terminalde (AGORA_ADRESI yerine SSH için kullandığınız adres):
 
 ```bash
-ssh -N -L 8765:127.0.0.1:8765 eylem@AGORA_ADRESI
+ssh -o ExitOnForwardFailure=yes -N -L 8766:127.0.0.1:8766 eylem@AGORA_ADRESI
 ```
 
-Tünel açıkken tarayıcıda **http://127.0.0.1:8765** açın.
+Tünel açıkken tarayıcıda **http://127.0.0.1:8766** açın.
 YouTube bağlantısı, ses/altyazı yöntemi, GPU/CPU ve dil seçilebilir.
 İşlem günlüğü otomatik güncellenir; aynı web sunucusu bir defada tek iş çalıştırır.
 Mevcut `~/agora-transcripts/` kayıtları da listelenir. Dökümde arama ve
