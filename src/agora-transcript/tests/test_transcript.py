@@ -71,6 +71,54 @@ class TranscriptTests(unittest.TestCase):
             self.assertEqual(manifest["status"], "failed")
             self.assertFalse(list(Path(temp).glob("*/transcript.txt")))
 
+    def test_finished_broadcast_downloads_and_transcribes_before_archive_ready(self):
+        for status in ("post_live", "was_live", "not_live"):
+            with self.subTest(status=status), tempfile.TemporaryDirectory() as temp:
+                def download(arguments, *args, **kwargs):
+                    if "--dump-single-json" in arguments:
+                        return json.dumps({"id": "cgBmqZE8XCg", "live_status": status, "is_live": False})
+                    self.assertEqual(arguments[arguments.index("-f") + 1], "bestaudio/best")
+                    media = Path(arguments[arguments.index("-o") + 1].replace("%(ext)s", "m4a"))
+                    media.write_bytes(b"audio fixture")
+                    return str(media) + "\n"
+
+                segments = [{"start": 0, "end": 2, "text": "Fed özel yayını.", "words": []}]
+                with patch.object(app, "run_ydl", side_effect=download) as ydl, \
+                        patch.object(app, "transcribe_audio", return_value=segments) as transcribe, \
+                        contextlib.redirect_stderr(io.StringIO()), contextlib.redirect_stdout(io.StringIO()):
+                    self.assertEqual(app.main(["https://youtu.be/cgBmqZE8XCg", "--mode", "audio", "--output", temp]), 0)
+                self.assertEqual(ydl.call_count, 2)
+                transcribe.assert_called_once()
+                job = next(Path(temp).iterdir())
+                manifest = json.loads((job / "manifest.json").read_text())
+                self.assertEqual(manifest["status"], "completed")
+                self.assertEqual(manifest["video"]["live_status"], status)
+                self.assertEqual(json.loads((job / "transcript.json").read_text())["segments"][0]["text"], segments[0]["text"])
+
+    def test_active_and_upcoming_broadcasts_do_not_start_download(self):
+        for info in ({"live_status": "is_live"}, {"live_status": "is_upcoming"},
+                     {"is_live": True}, {"is_upcoming": True},
+                     {"is_live": True, "live_status": "post_live"}):
+            with self.subTest(info=info), tempfile.TemporaryDirectory() as temp:
+                with patch.object(app, "run_ydl", return_value=json.dumps(info)) as ydl, \
+                        patch.object(app, "transcribe_audio") as transcribe, \
+                        contextlib.redirect_stderr(io.StringIO()):
+                    self.assertEqual(app.main(["https://youtu.be/cgBmqZE8XCg", "--mode", "audio", "--output", temp]), 1)
+                self.assertEqual(ydl.call_count, 1)
+                transcribe.assert_not_called()
+
+    def test_post_live_download_failure_is_not_transcribed_or_completed(self):
+        with tempfile.TemporaryDirectory() as temp:
+            with patch.object(app, "run_ydl", side_effect=[json.dumps({"live_status": "post_live"}), RuntimeError("no fragments available")]) as ydl, \
+                    patch.object(app, "transcribe_audio") as transcribe, \
+                    contextlib.redirect_stderr(io.StringIO()):
+                self.assertEqual(app.main(["https://youtu.be/cgBmqZE8XCg", "--mode", "audio", "--output", temp]), 1)
+            self.assertEqual(ydl.call_count, 2)
+            transcribe.assert_not_called()
+            job = next(Path(temp).iterdir())
+            self.assertEqual(json.loads((job / "manifest.json").read_text())["status"], "failed")
+            self.assertFalse((job / "transcript.json").exists())
+
     def test_completed_job_formats_agree_and_new_runs_do_not_overwrite(self):
         with tempfile.TemporaryDirectory() as temp:
             segments = [{"start": 10, "end": 13, "text": "Yüz bin olabilir; kesin değil.", "words": []}]
