@@ -169,10 +169,14 @@ def run_ydl(arguments, cookie_file=None, timeout=300):
 def obtain_youtube(args, job, manifest):
     url = youtube_url(args.input)
     info = json.loads(run_ydl(["--dump-single-json", "--skip-download", "--", url], args.cookies))
-    if info.get("is_live") or info.get("live_status") in ("is_live", "is_upcoming", "post_live"):
-        raise ValueError("Yayın hâlâ canlı veya arşivi işleniyor; tam kayıt hazır olunca tekrar deneyin.")
+    if info.get("is_live") or info.get("is_upcoming") or info.get("live_status") in ("is_live", "is_upcoming"):
+        raise ValueError("Yayın hâlâ canlı veya henüz başlamadı; yayın bittikten sonra tekrar deneyin.")
     manifest.update({"source": url, "video": {k: info.get(k) for k in
-                     ("id", "title", "channel", "duration", "upload_date")}})
+                     ("id", "title", "channel", "duration", "upload_date", "live_status")}})
+    if info.get("live_status") == "post_live":
+        # YouTube may expose downloadable fragments before the archive is ready.
+        # Let yt-dlp attempt the download instead of rejecting this metadata state.
+        print("Yayın bitmiş; arşiv işleniyor olsa da mevcut kayıt indirilmeye çalışılacak.", file=sys.stderr)
     track = choose_caption(info, args.language)
     if args.mode != "audio" and track:
         kind, code = track
